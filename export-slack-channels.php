@@ -2,7 +2,6 @@
 <?php
 $tok = 'TOKEN';
 $url = "https://slack.com/api/channels.list?token=$tok";
-$dwpage = '/usr/share/dokuwiki/bin/dwpage.php';
 $page = 'it:slack_channels';
 
 /**
@@ -67,7 +66,7 @@ function dw_commit($page, $contents, $message) {
 	$tmpfile = tempnam(sys_get_temp_dir(), 'sl2dw');
 	file_put_contents($tmpfile, $contents);
 
-	global $dwpage;
+	$dwpage = '/usr/share/dokuwiki/bin/dwpage.php';
 	exec("{$dwpage} commit -m '{$message}' -t {$tmpfile} {$page} 2>&1 | grep -v ^S:");
 	unlink($tmpfile);
 }
