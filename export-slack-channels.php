@@ -10,18 +10,16 @@ curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 $res = curl_exec($ch);
 curl_close($ch);
 if (!$res){
-	echo 'No response!' . PHP_EOL;
+	error_log('No response!');
 	exit(1);
 }
 $data = json_decode($res);
 if(!$data->ok || $data->ok != true) {
-	echo 'Response from API NOT OK:' . PHP_EOL;
-	var_dump($res);
+	error_log('Response from API NOT OK: '. var_export($res,1));
 	exit(1);
 }
 if(!$data->channels || !count($data->channels)){
-	echo 'No channels in response!' . PHP_EOL;
-	var_dump($res);
+	error_log('No channels in response!'. var_export($res,1));
 	exit(1);
 }
 
