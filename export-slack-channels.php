@@ -1,6 +1,6 @@
 #!/usr/bin/php
 <?php
-$tok = getenv('slack_api_token');
+$tok = 'TOKEN';
 $url = "https://slack.com/api/channels.list?token=$tok";
 
 $ch = curl_init();
