@@ -5,6 +5,10 @@ $url = "https://slack.com/api/channels.list?token=$tok";
 $dwpage = '/usr/share/dokuwiki/bin/dwpage.php';
 $page = 'it:slack_channels';
 
+function decode($s) {
+	return html_entity_decode($s, ENT_QUOTES, 'UTF-8');
+}
+
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
 curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -36,8 +40,8 @@ echo $header;
 foreach($data->channels as $chan) {
 	printf($fmt,
 	'[[https://team.slack.com/messages/' . $chan->name . '|#' . $chan->name . ']]',
-	$chan->purpose->value,
-	$chan->topic->value);
+	decode($chan->purpose->value),
+	decode($chan->topic->value));
 }
 $contents = ob_get_clean();
 
