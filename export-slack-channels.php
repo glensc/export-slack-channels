@@ -12,6 +12,14 @@ function decode($s) {
 }
 
 /**
+ * Do custom markup, like eventum issue link -> issue markup
+ */
+function markup($s) {
+	$s = preg_replace('#https://eventum.example.org/view.php\?id=(\d+)#', '[[issue>$1]]', $s);
+	return $s;
+}
+
+/**
  * Fetch channels list from slack api
  */
 function get_channels_list($url) {
@@ -50,10 +58,12 @@ function format_channels_list($data) {
 	echo $header;
 
 	foreach($data->channels as $chan) {
+		$topic = markup(decode($chan->topic->value));
+
 		printf($fmt,
-		'[[https://team.slack.com/messages/' . $chan->name . '|#' . $chan->name . ']]',
-		decode($chan->purpose->value),
-		decode($chan->topic->value));
+			'[[https://team.slack.com/messages/' . $chan->name . '|#' . $chan->name . ']]',
+			decode($chan->purpose->value), $topic
+		);
 	}
 	$contents = ob_get_clean();
 	return $contents;
