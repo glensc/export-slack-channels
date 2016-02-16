@@ -21,6 +21,9 @@ function markup($s) {
 	// use issue markup
 	$s = preg_replace('#https://eventum.example.org/view.php\?id=(\d+)#', '[[issue>$1]]', $s);
 
+	// wiki page markup
+	$s = preg_replace('#https://wiki.example.org/(\S+)\b#', '[[$1]]', $s);
+
 	// do not allow newlines, use wiki markup
 	$s = preg_replace("/\r?\n/", ' \\\\\\\\ ', $s);
 	return $s;
