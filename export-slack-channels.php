@@ -1,7 +1,6 @@
 #!/usr/bin/php
 <?php
-$tok = 'TOKEN';
-$url = "https://slack.com/api/channels.list?token=$tok";
+define('SLACK_TOKEN', 'TOKEN');
 $page = 'it:slack_channels';
 
 /**
@@ -29,10 +28,8 @@ function markup($s) {
 	return $s;
 }
 
-/**
- * Fetch channels list from slack api
- */
-function get_channels_list($url) {
+function slack_api($method) {
+	$url = "https://slack.com/api/{$method}?token=".SLACK_TOKEN;
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -49,12 +46,21 @@ function get_channels_list($url) {
 		error_log('Response from API NOT OK: '. var_export($res,1));
 		exit(1);
 	}
+	return $data;
+}
+
+/**
+ * Fetch channels list from slack api
+ */
+function get_channels_list() {
+	$data = slack_api('channels.list');
 	if(!$data->channels || !count($data->channels)){
 		error_log('No channels in response!'. var_export($res,1));
 		exit(1);
 	}
 	return $data;
 }
+
 
 /**
  * Format channels list into dokuwiki syntax
@@ -91,6 +97,6 @@ function dw_commit($page, $contents, $message) {
 	unlink($tmpfile);
 }
 
-$data = get_channels_list($url);
+$data = get_channels_list();
 $contents = format_channels_list($data);
 dw_commit($page, $contents, "updated slack channels info");
