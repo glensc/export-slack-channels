@@ -28,13 +28,31 @@ function markup($s) {
 	return $s;
 }
 
+/**
+ * @see https://stackoverflow.com/a/10590242
+ */
+function get_headers_from_curl_response($header_text) {
+	$headers = array();
+	foreach (explode("\r\n", $header_text) as $i => $line) {
+		if ($i === 0) {
+			$headers['http_code'] = $line;
+		} else {
+			list($key, $value) = explode(': ', $line);
+			$headers[$key] = $value;
+		}
+	}
+
+	return $headers;
+}
+
 function slack_api($method, $params = array()) {
+	printf("slack: %s %s\n", $method, json_encode($params));
 	$params['token'] =  SLACK_TOKEN;
 	$url = "https://slack.com/api/{$method}?". http_build_query($params, null, '&');
 
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_HEADER, 0);
+	curl_setopt($ch, CURLOPT_HEADER, true);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 	$res = curl_exec($ch);
@@ -43,11 +61,22 @@ function slack_api($method, $params = array()) {
 		error_log('No response!');
 		exit(1);
 	}
-	$data = json_decode($res);
+	list($headers_text, $body) = explode("\r\n\r\n", $res, 2);
+	$data = json_decode($body);
 	if(!$data->ok || $data->ok != true) {
-		error_log('Response from API NOT OK: '. var_export($res,1));
+		$headers = get_headers_from_curl_response($headers_text);
+		if (isset($headers['Retry-After'])) {
+			$retryAfter = (int)$headers['Retry-After'];
+			echo "Rate limited; retrying after $retryAfter\n";
+			sleep($retryAfter);
+			return slack_api($method, $params);
+		}
+
+		error_log("Response from API NOT OK: $body");
+		print_r($headers);
 		exit(1);
 	}
+
 	return $data;
 }
 
