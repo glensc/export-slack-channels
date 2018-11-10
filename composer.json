@@ -1,0 +1,14 @@
+{
+	"name": "glen/export-slack-channels",
+	"config": {
+		"platform": {
+			"php": "5.3.29"
+		},
+		"sort-packages": true
+	},
+	"require": {
+		"php": "^5.3.0 || ^7.0",
+		"ext-curl": "*",
+		"ext-pcre": "*"
+	}
+}
