@@ -47,8 +47,8 @@ function get_headers_from_curl_response($header_text) {
 
 function slack_api($method, $params = array()) {
 	printf("slack: %s %s\n", $method, json_encode($params));
-	$params['token'] =  SLACK_TOKEN;
-	$url = "https://slack.com/api/{$method}?". http_build_query($params, null, '&');
+	$params['token'] = SLACK_TOKEN;
+	$url = "https://slack.com/api/{$method}?" . http_build_query($params, null, '&');
 
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -57,13 +57,13 @@ function slack_api($method, $params = array()) {
 	curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 	$res = curl_exec($ch);
 	curl_close($ch);
-	if (!$res){
+	if (!$res) {
 		error_log('No response!');
 		exit(1);
 	}
 	list($headers_text, $body) = explode("\r\n\r\n", $res, 2);
 	$data = json_decode($body);
-	if(!$data->ok || $data->ok != true) {
+	if (!$data->ok || $data->ok !== true) {
 		$headers = get_headers_from_curl_response($headers_text);
 		if (isset($headers['Retry-After'])) {
 			$retryAfter = (int)$headers['Retry-After'];
@@ -85,8 +85,8 @@ function slack_api($method, $params = array()) {
  */
 function get_channels_list() {
 	$data = slack_api('channels.list');
-	if(!$data->channels || !count($data->channels)){
-		error_log('No channels in response!'. var_export($res,1));
+	if (!$data->channels || !count($data->channels)) {
+		error_log('No channels in response!' . var_export($data, 1));
 		exit(1);
 	}
 	return $data;
@@ -99,10 +99,10 @@ function get_channels_list() {
 function format_channels_list($data) {
 	$output = array();
 
-	$tr = function ($data, $separator = "|") {
-		array_unshift($data, "");
-		array_push($data, "");
-		return join($separator, $data);
+	$tr = function ($data, $separator = '|') {
+		array_unshift($data, '');
+		$data[] = '';
+		return implode($separator, $data);
 	};
 
 	$headers = array('Channel Name', 'Channel Purpose', 'Channel Topic', 'First Message');
@@ -112,21 +112,21 @@ function format_channels_list($data) {
 
 	$active = $inactive = array();
 	$team_url = SLACK_TEAM_URL;
-	foreach($data->channels as $chan) {
-		$topic = markup($chan->topic->value);
+	foreach ($data->channels as $channel) {
+		$topic = markup($channel->topic->value);
 
-		$history = slack_api('channels.history', array('channel' => $chan->id, 'oldest' => 1, 'count' => 1));
+		$history = slack_api('channels.history', array('channel' => $channel->id, 'oldest' => 1, 'count' => 1));
 		$first_msg = strftime('%Y-%m-%d', $history->messages[0]->ts);
 
 		$row = array(
-			"[[{$team_url}/messages/{$chan->name}|#{$chan->name}]]",
-			markup($chan->purpose->value),
+			"[[{$team_url}/messages/{$channel->name}|#{$channel->name}]]",
+			markup($channel->purpose->value),
 			$topic,
-		   	$first_msg,
+			$first_msg,
 		);
 
-		if ($chan->is_archived) {
-			$history = slack_api('channels.history', array('channel' => $chan->id, 'count' => 1));
+		if ($channel->is_archived) {
+			$history = slack_api('channels.history', array('channel' => $channel->id, 'count' => 1));
 			$last_msg = strftime('%Y-%m-%d', $history->messages[0]->ts);
 			$row[] = $last_msg;
 			$inactive[] = $tr($row);
@@ -137,18 +137,18 @@ function format_channels_list($data) {
 
 	if ($active) {
 		$output[] = "\n====== Active Channels ======\n";
-		$output[] = $tr($headers, "^");
-		$output[] = join("\n", $active);
+		$output[] = $tr($headers, '^');
+		$output[] = implode("\n", $active);
 	}
 
 	if ($inactive) {
 		$output[] = "\n====== Archived Channels ======\n";
 		$headers[] = 'Last Message';
-		$output[] = $tr($headers, "^");
-		$output[] = join("\n", $inactive);
+		$output[] = $tr($headers, '^');
+		$output[] = implode("\n", $inactive);
 	}
 
-	return join("\n", $output);
+	return implode("\n", $output);
 }
 
 /**
